@@ -73,22 +73,60 @@ str(list2)
 
 data <- read.csv("Lifts_data.csv")
 
+##a little more cleanup.
+data$WeightClassKg <- as.numeric(as.character(data$WeightClassKg))
 
-##re-do summary stats to have a group-by
-##summary_stats <- data %>% 
-  ##summarise(mean_total_kg = mean(TotalKg, na.rm = TRUE))
 
-##Create data subsets
-male_data <- filter(data, Sex == "M")
+##explore weight class
 
-female_data <- filter(data, Sex == "F")
+data_w <- na.omit(data[!is.na(data$WeightClassKg),])
 
+##subset to explore by m and f  
+male_data <- filter(data_w, Sex == "M")
+
+female_data <- filter(data_w, Sex == "F")
+
+data %>% 
+  group_by(Level) %>% 
+  summarise(mean = mean(TotalKg, na.rm = TRUE),
+            sd = sd(TotalKg, na.rm = TRUE),
+            min = min(TotalKg, na.rm = TRUE),
+            q1 = quantile(TotalKg, probs = 0.25, na.rm = TRUE),
+            median = median(TotalKg, na.rm = TRUE),
+            q3 = quantile(TotalKg, probs = 0.75, na.rm = TRUE),
+            max = max(TotalKg, na.rm = TRUE))
 
 ggplot(male_data, aes(x = Age)) +
-  geom_histogram(binwidth = 5, color = "black", fill = "lightblue") +
+  geom_histogram(binwidth = 5, color = "black", fill = "#0d6efd") +
   labs(title = "Histogram of Age for Males", x = "Age", y = "Count")
 
 ggplot(female_data, aes(x = Age)) +
-  geom_histogram(binwidth = 5, color = "black", fill = "pink") +
+  geom_histogram(binwidth = 5, color = "black", fill =  "#d63384") +
   labs(title = "Histogram of Age for Females", x = "Age", y = "Count")
+
+avg_total_by_weight_sex <- data_w %>%
+  group_by(WeightClassKg, Sex) %>%
+  summarise(avg_totalkg = mean(TotalKg, na.rm = TRUE))
+
+ggplot(avg_total_by_weight_sex , aes(x = WeightClassKg, y = avg_totalkg, color = Sex, group = Sex)) + 
+  geom_line(size = 1.5) +
+  scale_color_manual(values = c("#0d6efd", "#d63384")) +
+  labs(x = "Weight Class (kg)", y = "Average Total (kg)", color = "Sex") +  
+  theme_classic() +  
+  theme(legend.position = "top")
+
+ggplot(data_w, aes(x = BodyweightKg, y = TotalKg, color = Sex)) + 
+  geom_point(alpha = 0.1) +
+  scale_color_manual(values = c("#d63384", "#0d6efd")) + 
+  labs(x = "Body Weight (kg)", y = "Total Kg", color = "Sex") + 
+  theme_classic() 
+
+ggplot(avg_total_by_weight_sex, aes(x = WeightClassKg, y = avg_totalkg, fill = Sex)) +
+  geom_col(position = "dodge", width = 3.5) +
+  scale_fill_manual(values = c("#0d6efd", "#d63384")) +
+  labs(x = "Weight Class (kg)", y = "Average Total (kg)", fill = "Sex") +
+  theme_classic() +
+  theme(legend.position = "top")
+
+
 
